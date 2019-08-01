@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -23,6 +24,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -48,7 +50,9 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -57,6 +61,9 @@ public class MainActivity extends AppCompatActivity
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
+
+    private Location mLastlocation = null;
+    private double speed;
 
     private GoogleMap mMap = null;
     private Marker currentMarker = null;
@@ -70,6 +77,7 @@ public class MainActivity extends AppCompatActivity
     private static final int PERMISSIONS_REQUEST_CODE = 100;
     boolean needRequest = false;
 
+    double getSpeed;
 
     // 앱을 실행하기 위해 필요한 퍼미션을 정의합니다.
     String[] REQUIRED_PERMISSIONS  = {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION};  // 외부 저장소
@@ -107,6 +115,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -157,17 +166,17 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 walkState=false;
-//                PolylineOptions polylineOptions = new PolylineOptions();
-//                polylineOptions.color(Color.RED);
-//                polylineOptions.width(30);
-//                ArrayList<LatLng> Path = new ArrayList();
-//                for(int i = 0; i< locations.size(); i++){
-//                    Log.d("POLYLOG","long = " + locations.get(i).latitude);
-//                    Log.d("POLYLOG","lati = "+ locations.get(i).longitude);
-//                    Path.add(locations.get(i));
-//                }
-//                polylineOptions.addAll(Path);
-//                mMap.addPolyline(polylineOptions);
+                PolylineOptions polylineOptions = new PolylineOptions();
+                polylineOptions.color(Color.RED);
+                polylineOptions.width(30);
+                ArrayList<LatLng> Path = new ArrayList();
+                for(int i = 0; i< locations.size(); i++){
+                    Log.d("POLYLOG","long = " + locations.get(i).latitude);
+                    Log.d("POLYLOG","lati = "+ locations.get(i).longitude);
+                    Path.add(locations.get(i));
+                }
+                polylineOptions.addAll(Path);
+                mMap.addPolyline(polylineOptions);
 
                 loc.setLocations(locations);
 
@@ -192,6 +201,10 @@ public class MainActivity extends AppCompatActivity
                         = new LatLng(location.getLatitude(), location.getLongitude());
 
                 locations.add(currentPosition);
+
+                // getSpeed() 함수를 이용하여 속도를 계산
+                getSpeed = Double.parseDouble(String.format("%.3f", location.getSpeed()));
+                Log.d("LOCATIONLOG","getSpeed = "  +getSpeed);
 
                 String markerTitle = getCurrentAddress(currentPosition);
                 String markerSnippet = "위도:" + String.valueOf(location.getLatitude())
@@ -390,7 +403,7 @@ public class MainActivity extends AppCompatActivity
 
 
         if (addresses == null || addresses.size() == 0) {
-            Toast.makeText(this, "주소 미발견", Toast.LENGTH_LONG).show();
+           // Toast.makeText(this, "주소 미발견", Toast.LENGTH_LONG).show();
             return "주소 미발견";
 
         } else {
@@ -584,6 +597,7 @@ public class MainActivity extends AppCompatActivity
                     if (checkLocationServicesStatus()) {
 
                         Log.d(TAG, "onActivityResult : GPS 활성화 되있음");
+                        Log.d(TAG, "onActivityResult : GPS 활성화 되있음");
 
 
                         needRequest = true;
@@ -599,6 +613,36 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onLocationChanged(android.location.Location location) {
 
+//        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+//        double deltaTime = 0;
+//
+//        // getSpeed() 함수를 이용하여 속도를 계산
+//        double getSpeed = Double.parseDouble(String.format("%.3f", location.getSpeed()));
+//        Log.d("LOCATIONLOG","getSpeed = "  +getSpeed);
+//        String formatDate = sdf.format(new Date(location.getTime()));
+//        Log.d("LOCATIONLOG","formatDate = "  +formatDate);
+//
+//        // 위치 변경이 두번째로 변경된 경우 계산에 의해 속도 계산
+//        if(mLastlocation != null) {
+//            //시간 간격
+//            deltaTime = (location.getTime() - mLastlocation.getTime()) / 1000.0;
+//            // 속도 계산
+//            speed = mLastlocation.distanceTo(location) / deltaTime;
+//            Log.d("LOCATIONLOG","speed = "  +speed);
+//
+//            String formatLastDate = sdf.format(new Date(mLastlocation.getTime()));
+//
+//            double calSpeed = Double.parseDouble(String.format("%.3f", speed));
+//        }
+//        // 현재위치를 지난 위치로 변경
+//        mLastlocation = location;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+          locationManager.removeUpdates(this);
     }
 
     @Override
